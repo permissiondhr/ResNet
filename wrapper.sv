@@ -11,8 +11,8 @@ module wrapper #(
 	input		[15:0] 	data_in[FM_DEPTH-1:0],
 	output					data_out_valid,
 	output					vs_next,
-	output 	signed	[15:0]	data_out[FM_DEPTH-1][CORE_SIZE-1:0],
-	output 	signed 	[15:0] 	C [FM_DEPTH-1:0][3:0]// To residual module
+	output 		[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
+	output 	 	[15:0] 	C [FM_DEPTH-1:0][3:0]// To residual module
 );
 
 // Internal signals
@@ -41,9 +41,9 @@ generate
 					data_in_reg[j][k] <= 0;
 				else begin
 					if (data_in_valid)
-						data_in_reg <= data_in;
+						data_in_reg[j][k] <= data_in[j][k];
 					else
-						data_in_reg <= data_in_reg;
+						data_in_reg[j][k] <= data_in_reg[j][k];
 				end
 			end			
 		end

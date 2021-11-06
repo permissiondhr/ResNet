@@ -7,12 +7,19 @@ module wrapper_tb #(
 );
 
 reg clk, rstn, mode_in, verticle_sync, data_in_valid;
-reg  signed	[15:0] 	data_in[FM_DEPTH-1:0];
+reg  	[15:0] 	data_in[FM_DEPTH-1:0];
 wire data_out_valid, vs_next;
-wire signed	[15:0]	data_out[FM_DEPTH-1][CORE_SIZE-1:0];
-wire signed 	[15:0] 	C [FM_DEPTH-1:0][3:0];
+wire 	[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0];
+wire  	[15:0] 	C [FM_DEPTH-1:0][3:0];
 
 reg [2:0]cnt;
+
+initial begin
+    $dumpfile("wrapper.vcd");
+    $dumpvars(0, wrapper_tb);
+    # 10000
+    $finish;
+end
 
 initial begin
     clk = 0;
