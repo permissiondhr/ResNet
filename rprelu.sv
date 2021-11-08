@@ -23,9 +23,9 @@ module RPReLU_layer4
             if(~rstn) begin
                 data_out_valid  <= 0;
                 data_out[i]     <= 0;
-            end else if(mode  && data_in_valid) begin
+            end else if(mode_in  && data_in_valid) begin
                 data_out_valid  <= 1;
-                data_out[i]     <= (data_in[i] > rprelu_gamma) ? (data_in[i] - rprelu_gamma[i] + rprelu_zeta[i)] : (rprelu_beta * (data_in[i] - rprelu_gamma[i]) + rprelu_zeta[i]);
+                data_out[i]     <= (data_in[i] > rprelu_gamma[i]) ? (data_in[i] - rprelu_gamma[i] + rprelu_zeta[i]) : (rprelu_beta[i] * (data_in[i] - rprelu_gamma[i]) + rprelu_zeta[i]);
             end else begin
                 data_out_valid  <= 0;
                 data_out[i]     <= data_out[i] ;

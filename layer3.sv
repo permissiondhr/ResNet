@@ -44,11 +44,11 @@ module layer3
 
     // Signals From Macro to decoder
     wire data_e_mc2de;
-    wire [`MACRO_O_DW - 1 : 0] data_mc2de[CHANNEL_NUM - 1 : 0][MACRO_NUM - 1 : 0];
+    wire [5 - 1 : 0] data_mc2de[CHANNEL_NUM - 1 : 0][MACRO_NUM - 1 : 0];
 
     // Signals FROM decoder to partail_sum
     wire data_e_de2ps;
-    wire [`DECODER_O_DW - 1 : 0] data_de2ps[CHANNEL_NUM - 1 : 0][MACRO_NUM - 1 : 0];
+    wire [4 - 1 : 0] data_de2ps[CHANNEL_NUM - 1 : 0][MACRO_NUM - 1 : 0];
 
     // Signals From partail_sum to bn_res
     wire data_e_ps2bn;

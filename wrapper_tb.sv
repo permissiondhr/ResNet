@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/1ns
 module wrapper_tb #(
     parameter FM_DEPTH  = 64,
     parameter FM_WIDTH  = 56,
@@ -14,12 +14,12 @@ wire  	[15:0] 	C [FM_DEPTH-1:0][3:0];
 
 reg [2:0]cnt;
 
-initial begin
-    $dumpfile("wrapper.vcd");
-    $dumpvars(0, wrapper_tb);
-    # 10000
-    $finish;
-end
+//initial begin
+//    $dumpfile("wrapper.vcd");
+//    $dumpvars(0, wrapper_tb);
+//    # 10000
+//    $finish;
+//end
 
 initial begin
     clk = 0;
@@ -28,18 +28,18 @@ end
 always #5 clk = ~clk;
 
 initial begin
-    rstn = 1;
-    #7
-    rstn = ~rstn;
-    #7
+    #44
+    rstn = 0;
+    #50
     rstn = ~rstn;
 end
 
 initial begin
     mode_in = 0;
     verticle_sync = 1;
-    #15
+    #122
     mode_in = ~mode_in;
+    #10
     verticle_sync = ~verticle_sync;
 end
 
