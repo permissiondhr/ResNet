@@ -113,7 +113,7 @@ always @(posedge clk or negedge rstn) begin
 		sram_addr_reg <= 0;
 	else begin
 		if (cnt == 0)
-			sram_addr_reg <= col_num + (~row_num[0]) * FM_WIDTH + 1;
+			sram_addr_reg <= col_num + (!row_num[0]) * FM_WIDTH + 1;
 		else begin
 			if (cnt == 1)
 				sram_addr_reg <= col_num + (row_num[0]) * FM_WIDTH + 1;
