@@ -9,11 +9,12 @@ module wrapper #(
 	input       			mode_in,    	// Load parameter when disserted, Calculate when asserted
 	input					data_in_valid,	// Data enable signal
 	input		[15:0] 		data_in	[FM_DEPTH-1:0],
-	output					data_out_valid,
-	output					vs_next,
-	output 					latch_to_macro,					
-	output 					adc_to_macro,
-	output					enable_to_macro,
+	output wire					data_out_valid,
+	output wire					vs_next,
+	output wire 				latch_to_macro,					
+	output wire 				adc_to_macro,
+	output wire					enable_to_macro,
+	output wire					data_to_partial_valid,
 	output reg	[15:0]		data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
 	output reg  [15:0] 		res 	[FM_DEPTH-1:0][3:0]// To residual module
 );
@@ -273,16 +274,17 @@ always @(posedge clk or negedge rstn) begin
 		else begin
 			case (cnt_latch_adc)
 				0:  	 cnt_latch_adc <= 0;
-				11: 	 cnt_latch_adc <= 0;
+				12: 	 cnt_latch_adc <= 0;
 				default: cnt_latch_adc <= cnt_latch_adc + 1;
 			endcase
 		end	
 	end
 end
 
-assign adc_to_macro = ((cnt_latch_adc > 4) && (cnt_latch_adc < 8)) ? 1 : 0;	// adc high when cntla 5~7
-assign latch_to_macro   = (cnt_latch_adc > 7) ? 1 : 0;						// latch high when cntla 8~11 
-assign enable_to_macro = ((cnt_latch_adc == 0) && (data_out_valid == 0)) ? 0 : 1;						// enable hign wehn cntla != 0
-assign vs_next = (conv_core_invalid == 0) && (row_num == 2) && (col_num == 0) && (cnt == 7);
+assign adc_to_macro 	= ((cnt_latch_adc > 9) && (cnt_latch_adc < 9)) ? 1 : 0;	// adc high when cntla 5~7
+assign latch_to_macro   = (cnt_latch_adc > 8) ? 1 : 0;							// latch high when cntla 8~11 
+assign enable_to_macro 	= (cnt_latch_adc == 0) ? 0 : 1;							// enable hign wehn cntla != 0
+assign data_to_partial_valid = (cnt_latch_adc == 9) ? 1 : 0;
+assign vs_next 			= (conv_core_invalid == 0) && (row_num == 2) && (col_num == 0) && (cnt == 7);
 
 endmodule

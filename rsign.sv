@@ -19,13 +19,17 @@ generate
                 if(~rstn) begin    // When RESET is valid, reset data_out, data_e_out
                     data_out[i][j] <= 1'b0;
                     data_out_valid <= 0;
-                end else if(mode_in && data_in_valid) begin
-                    data_out[i][j] <= data_in[i][j] > para_in[i] ? 1'b1 : 1'b0;
-                    data_out_valid <= 1;
-                end else begin
-                    data_out[i][j] <= data_out[i][j];
-                    data_out_valid <= 0;
-                end//if
+                end 
+                else begin
+                    if(data_in_valid) begin
+                        data_out[i][j] <= data_in[i][j] > para_in[i] ? 1'b1 : 1'b0;
+                        data_out_valid <= 1;
+                    end 
+                    else begin
+                        data_out[i][j] <= data_out[i][j];
+                        data_out_valid <= 0;
+                    end//if
+                end
             end //always
         end // for j
     end // for i
