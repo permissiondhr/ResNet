@@ -281,7 +281,7 @@ always @(posedge clk or negedge rstn) begin
 	end
 end
 
-assign adc_to_macro 	= ((cnt_latch_adc > 9) && (cnt_latch_adc < 9)) ? 1 : 0;	// adc high when cntla 5~7
+assign adc_to_macro 	= ((cnt_latch_adc > 5) && (cnt_latch_adc < 9)) ? 1 : 0;	// adc high when cntla 5~7
 assign latch_to_macro   = (cnt_latch_adc > 8) ? 1 : 0;							// latch high when cntla 8~11 
 assign enable_to_macro 	= (cnt_latch_adc == 0) ? 0 : 1;							// enable hign wehn cntla != 0
 assign data_to_partial_valid = (cnt_latch_adc == 9) ? 1 : 0;

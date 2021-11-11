@@ -12,23 +12,38 @@ module decoder
     generate
        for(i = 0; i < CHANNEL_NUM; i = i + 1) begin:igen
             for(j = 0; j < MACRO_NUM; j = j + 1) begin:jgen
-                assign data_out[i][j] = (data_in[i][j]==5'b00000) ? 4'b1000 : (
-                                        (data_in[i][j]==5'b00001) ? 4'b1001 : (
-                                        (data_in[i][j]==5'b00010) ? 4'b1010 : (
-                                        (data_in[i][j]==5'b00100) ? 4'b1011 : (
-                                        (data_in[i][j]==5'b01000) ? 4'b1100 : (
-                                        (data_in[i][j]==5'b10000) ? 4'b1101 : (
-                                        (data_in[i][j]==5'b10001) ? 4'b1110 : (
-                                        (data_in[i][j]==5'b10010) ? 4'b1111 : (
-                                        (data_in[i][j]==5'b10100) ? 4'b0000 : (
-                                        (data_in[i][j]==5'b11000) ? 4'b0001 : (
-                                        (data_in[i][j]==5'b11001) ? 4'b0010 : (
-                                        (data_in[i][j]==5'b11010) ? 4'b0011 : (
-                                        (data_in[i][j]==5'b11100) ? 4'b0100 : (
-                                        (data_in[i][j]==5'b11101) ? 4'b0101 : (
-                                        (data_in[i][j]==5'b11110) ? 4'b0110 : (
-                                        (data_in[i][j]==5'b11111) ? 4'b0111 : 4'b0000
-                )))))))))))))));
+                assign data_out[i][j] = data_in[i][j] == 5'b00000 ? 4'b1000 :
+                                        data_in[i][j] == 5'b00001 ? 4'b1001 :
+                                        data_in[i][j] == 5'b00010 ? 4'b1010 :
+                                        data_in[i][j] == 5'b00011 ? 4'b1011 :
+                                        data_in[i][j] == 5'b00100 ? 4'b1011 :
+                                        data_in[i][j] == 5'b00101 ? 4'b1100 :
+                                        data_in[i][j] == 5'b00110 ? 4'b1101 :
+                                        data_in[i][j] == 5'b00111 ? 4'b1110 :
+                                        data_in[i][j] == 5'b01000 ? 4'b1100 :
+                                        data_in[i][j] == 5'b01001 ? 4'b1101 :
+                                        data_in[i][j] == 5'b01010 ? 4'b1110 :
+                                        data_in[i][j] == 5'b01011 ? 4'b1111 :
+                                        data_in[i][j] == 5'b01100 ? 4'b1111 :
+                                        data_in[i][j] == 5'b01101 ? 4'b0000 :
+                                        data_in[i][j] == 5'b01110 ? 4'b0001 :
+                                        data_in[i][j] == 5'b01111 ? 4'b0010 :
+                                        data_in[i][j] == 5'b10000 ? 4'b1101 :
+                                        data_in[i][j] == 5'b10001 ? 4'b1110 :
+                                        data_in[i][j] == 5'b10010 ? 4'b1111 :
+                                        data_in[i][j] == 5'b10011 ? 4'b0000 :
+                                        data_in[i][j] == 5'b10100 ? 4'b0000 :
+                                        data_in[i][j] == 5'b10101 ? 4'b0001 :
+                                        data_in[i][j] == 5'b10110 ? 4'b0010 :
+                                        data_in[i][j] == 5'b10111 ? 4'b0011 :
+                                        data_in[i][j] == 5'b11000 ? 4'b0001 :
+                                        data_in[i][j] == 5'b11001 ? 4'b0010 :
+                                        data_in[i][j] == 5'b11010 ? 4'b0011 :
+                                        data_in[i][j] == 5'b11011 ? 4'b0100 :
+                                        data_in[i][j] == 5'b11100 ? 4'b0100 :
+                                        data_in[i][j] == 5'b11101 ? 4'b0101 :
+                                        data_in[i][j] == 5'b11110 ? 4'b0110 :
+                                                                    4'b0111 ；
             end
         end
     endgenerate
