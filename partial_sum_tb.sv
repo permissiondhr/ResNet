@@ -7,7 +7,7 @@ module partial_sum_tb #(
 
 reg 		clk, rstn, data_in_valid;
 reg  [3:0] 	data_in [CHANNEL_NUM-1:0][MACRO_NUM-1:0];
-wire [5:0]	data_out[CHANNEL_NUM-1:0];
+wire [7:0]	data_out[CHANNEL_NUM-1:0];
 wire		data_out_valid;
 
 reg  [3:0] 	cnt;
