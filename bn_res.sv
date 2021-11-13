@@ -18,8 +18,8 @@ module bn_res
     output  reg                     			data_out_valid              	// DATA Enable signal to RPReLU
 );
 
-reg  signed [23: 0] product  [CHANNEL_NUM - 1 : 0];
-wire signed [23: 0] data_tmp [CHANNEL_NUM - 1 : 0];
+reg  signed [23 : 0] product  [CHANNEL_NUM - 1 : 0];
+wire signed [23 : 0] data_tmp [CHANNEL_NUM - 1 : 0];
 
 genvar i;
 generate
