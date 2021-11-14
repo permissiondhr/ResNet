@@ -20,23 +20,28 @@ module bn_res
 reg  signed [23 : 0] product  [CHANNEL_NUM - 1 : 0];
 wire signed [23 : 0] data_tmp [CHANNEL_NUM - 1 : 0];
 
+always @(posedge clk or negedge rstn) begin    
+    if(~rstn)
+        data_out_valid  <= 0;
+	else begin
+		if(data_in_valid)
+        	data_out_valid  <= 1;
+		else
+        	data_out_valid  <= 0;
+    end
+end
+
 genvar i;
 generate
 	for(i = 0; i < CHANNEL_NUM; i = i + 1) begin
 		always @(posedge clk or negedge rstn) begin    
-	        if(~rstn) begin
-	            data_out_valid  <= 0;
-	            product[i] 		<= 0;
-	        end 
+	        if(~rstn)
+	            product[i] <= 0;
 			else begin
-				if(data_in_valid) begin
-	            	data_out_valid  <= 1;
-	            	product[i] 		<= bn_a[i] * data_in[i];
-	        	end 
-				else begin
-	            	data_out_valid  <= 0;
-	            	product[i] 		<= product[i];
-				end
+				if(data_in_valid)
+	            	product[i] <= bn_a[i] * data_in[i];
+				else
+	            	product[i] <= product[i];
 	        end
 	    end
 

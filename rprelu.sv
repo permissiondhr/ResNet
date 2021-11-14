@@ -22,6 +22,17 @@ wire signed [DATA_WIDTH*2-9 : 0] prelu_sr   [CHANNEL_NUM-1 : 0]; // 23:0 for shi
 wire signed [DATA_WIDTH*2-8 : 0] rprelu     [CHANNEL_NUM-1 : 0];
 wire signed [DATA_WIDTH-1   : 0] data_cut   [CHANNEL_NUM-1 : 0];
 
+always @(posedge clk or negedge rstn) begin
+    if(~rstn)
+        data_out_valid  <= 0;
+    else begin 
+        if(data_in_valid)
+            data_out_valid  <= 1;
+        else
+            data_out_valid  <= 0;
+    end
+end
+
 genvar i;
 generate
     for(i = 0; i < CHANNEL_NUM; i = i + 1) begin
@@ -32,19 +43,13 @@ generate
         assign data_cut  [i] = (rprelu[i][24] == 1) ? ((rprelu[i][23:15] == 9'h1ff) ? rprelu[i][15:0] : 16'h8000)
 				   					                : ((rprelu[i][23:15] == 9'h000) ? rprelu[i][15:0] : 16'h7fff);
         always @(posedge clk or negedge rstn) begin
-            if(~rstn) begin
-                data_out_valid  <= 0;
-                data_out[i]     <= 0;
-            end 
+            if(~rstn)
+                data_out[i] <= 0;
             else begin 
-                if(data_in_valid) begin
-                    data_out_valid  <= 1;
-                    data_out[i]     <= data_cut[i];
-                end 
-                else begin
-                    data_out_valid  <= 0;
-                    data_out[i]     <= data_out[i] ;
-                end
+                if(data_in_valid)
+                    data_out[i] <= data_cut[i];
+                else
+                    data_out[i] <= data_out[i] ;
             end
         end
     end
