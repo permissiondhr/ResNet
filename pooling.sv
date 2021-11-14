@@ -24,8 +24,7 @@ generate
             end     
         end
     end
+    assign pooling_out[i] =  pooling_out_reg[i][17:2];
 endgenerate
-
-assign pooling_out = pooling_out_reg[17:2];
 
 endmodule

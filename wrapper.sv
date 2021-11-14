@@ -3,20 +3,20 @@ module wrapper #(
 	parameter FM_WIDTH  = 56,
 	parameter CORE_SIZE = 9
 ) (
-	input       			clk,
-	input       			rstn,
-	input       			verticle_sync,	// Verticle sync signal, start of one frame
-	input       			mode_in,    	// Load parameter when disserted, Calculate when asserted
-	input					data_in_valid,	// Data enable signal
-	input		[15:0] 		data_in	[FM_DEPTH-1:0],
-	output wire					data_out_valid,
-	output wire					vs_next,
-	output wire 				latch_to_macro,					
-	output wire 				adc_to_macro,
-	output wire					enable_to_macro,
-	output wire					data_to_partial_valid,
-	output reg	[15:0]		data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
-	output reg  [15:0] 		res 	[FM_DEPTH-1:0][3:0]// To residual module
+	input  wire       	clk,
+	input  wire       	rstn,
+	input  wire       	verticle_sync,				// Verticle sync signal, start of one frame
+	input  wire       	mode_in,    				// Load parameter when disserted, Calculate when asserted
+	input  wire			data_in_valid,				// Data enable signal
+	input  wire	[15:0] 	data_in	[FM_DEPTH-1:0],
+	output wire			data_out_valid,
+	output wire			vs_next,
+	output wire 		latch_to_macro,					
+	output wire 		adc_to_macro,
+	output wire			enable_to_macro,
+	output wire			data_to_partial_valid,
+	output reg	[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
+	output reg  [15:0] 	res 	[FM_DEPTH-1:0][3:0]	// To residual module
 );
 
 // Internal signals

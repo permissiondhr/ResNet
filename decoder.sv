@@ -1,7 +1,6 @@
-module decoder
-#(
+module decoder #(
     parameter CHANNEL_NUM  = 128,         // Channel number of Macro
-    parameter MICRO_NUM    = 4            // There are 4 macros in layer3
+    parameter MACRO_NUM    = 4            // There are 4 macros in layer3
 )
 (
     input  wire [4:0] data_in [CHANNEL_NUM - 1 : 0][MICRO_NUM-1:0],  // Output data from Partail_sum, 16 bit Width, 128

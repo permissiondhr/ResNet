@@ -40,7 +40,6 @@ generate
                 if(data_in_valid) begin
                     data_out_valid  <= 1;
                     data_out[i]     <= data_cut[i];
-                                       
                 end 
                 else begin
                     data_out_valid  <= 0;

@@ -6,7 +6,6 @@ module bn_res
 	parameter FM_DEPTH	   = 64
 )
 (
-    // GLOBAL SIGNALS
     input   wire                    			clk             ,    			// System Clock
     input   wire                    			rstn            ,    			// System Reset, Active LOW
     input   wire                    			data_in_valid   ,    			// DATA Enable signal, Active HIGH
