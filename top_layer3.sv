@@ -32,7 +32,7 @@ wire 							latch_to_macro;
 wire 							adc_to_macro;
 wire 							enable_to_macro;
 wire 							data_to_partial_valid;
-wire signed [DATA_WIDTH-1 : 0]	data_wrapper_rsign	[CHANNEL_NUM-1 : 0];
+wire signed [DATA_WIDTH-1 : 0]	data_wrapper_rsign	[FM_DEPTH-1:0][CORE_SIZE-1:0];
 wire							valid_wrapper_rsign;
 wire signed [15:0] 				res_wrapper_pooling [FM_DEPTH-1:0][3:0];
 
@@ -72,7 +72,7 @@ rsign #(
 );
 
 wire [4:0] data_macro_decoder 	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
-wire [3:0] data_decoder_partial	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
+wire signed[3:0] data_decoder_partial	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
 
 decoder #(
     .CHANNEL_NUM	(CHANNEL_NUM),
@@ -83,7 +83,7 @@ decoder #(
 );
 
 wire 		valid_partial_bn;
-wire [7:0]	data_partial_bn	[CHANNEL_NUM-1:0];
+wire signed[7:0]	data_partial_bn	[CHANNEL_NUM-1:0];
 
 partial_sum #(
     .CHANNEL_NUM	(CHANNEL_NUM),
@@ -99,6 +99,8 @@ partial_sum #(
 
 wire signed [DATA_WIDTH - 1 : 0] 	data_bn_rprelu [CHANNEL_NUM - 1 : 0];
 wire								valid_bn_rprelu;
+wire signed [DATA_WIDTH-1 : 0]	res_pooling_bn[FM_DEPTH-1:0];
+
 bn_res #(
     .DATA_WIDTH 	(DATA_WIDTH ),
     .PARA_WIDTH 	(PARA_WIDTH ),
@@ -107,7 +109,7 @@ bn_res #(
 ) inst_bn_res (
     .clk          	(clk          ),
     .rstn         	(rstn         ),
-    .data_in_valid	(data_partial_bn),
+    .data_in_valid	(valid_partial_bn),
     .bn_a     		(bn_a     ),
     .bn_b     		(bn_b     ),
     .res      		(res_pooling_bn),

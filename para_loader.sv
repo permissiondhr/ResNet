@@ -55,7 +55,7 @@ always@(posedge clk or negedge rstn) begin
         end
     end 
     else begin
-        if(mode == 0 && data_in_valid == 1) begin
+        if(mode_in == 0 && data_in_valid == 1) begin
             rsign_para[cnt_depth]   <= (cnt_para == 0) ? para_in : rsign_para[cnt_depth];
             bn_a[cnt_depth]         <= (cnt_para == 1) ? para_in : bn_a[cnt_depth];
             bn_b[cnt_depth]         <= (cnt_para == 2) ? para_in : bn_b[cnt_depth];

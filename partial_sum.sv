@@ -9,7 +9,7 @@ module partial_sum
     input  wire             data_in_valid,
     input  wire signed [3:0]data_in [CHANNEL_NUM-1:0][MACRO_NUM-1:0],
     output reg              data_out_valid,
-    output reg         [7:0]data_out[CHANNEL_NUM-1:0]
+    output reg  signed [7:0]data_out[CHANNEL_NUM-1:0]
 );
 
 wire  [7:0]  data_out_tmp[CHANNEL_NUM-1:0];

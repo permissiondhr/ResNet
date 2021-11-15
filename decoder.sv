@@ -3,8 +3,8 @@ module decoder #(
     parameter MACRO_NUM    = 4            // There are 4 macros in layer3
 )
 (
-    input  wire [4:0] data_in [CHANNEL_NUM - 1 : 0][MICRO_NUM-1:0],  // Output data from Partail_sum, 16 bit Width, 128
-    output wire [3:0] data_out[CHANNEL_NUM - 1 : 0][MICRO_NUM-1:0]
+    input  wire [4:0] data_in [CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0],  // Output data from Partail_sum, 16 bit Width, 128
+    output wire signed [3:0] data_out[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0]
 );
 
     genvar  i, j;
@@ -42,7 +42,7 @@ module decoder #(
                                         data_in[i][j] == 5'b11100 ? 4'b0100 :
                                         data_in[i][j] == 5'b11101 ? 4'b0101 :
                                         data_in[i][j] == 5'b11110 ? 4'b0110 :
-                                                                    4'b0111 ；
+                                                                    4'b0111 ;
             end
         end
     endgenerate

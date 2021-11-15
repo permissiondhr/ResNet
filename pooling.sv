@@ -4,14 +4,14 @@ module pooling #(
     input   wire clk,
     input   wire rstn,
     input   wire data_in_valid,
-    input   wire [15:0] pooling_in[FM_DEPTH-1:0][3:0],
-    output  wire [15:0] pooling_out[FM_DEPTH-1:0]
+    input   wire signed [15:0] pooling_in[FM_DEPTH-1:0][3:0],
+    output  wire signed [15:0] pooling_out[FM_DEPTH-1:0]
 );
 
 reg signed [17:0] pooling_out_reg[FM_DEPTH-1:0];
 
+genvar i;
 generate
-	genvar i ;
 	for (i = 0; i< FM_DEPTH; i=i+1) begin:build_pooling_core
         always @(posedge clk or negedge rstn) begin
             if (~rstn)
@@ -23,8 +23,9 @@ generate
                     pooling_out_reg[i] <= pooling_out_reg[i];
             end     
         end
+        assign pooling_out[i] =  pooling_out_reg[i][17:2];
     end
-    assign pooling_out[i] =  pooling_out_reg[i][17:2];
+    
 endgenerate
 
 endmodule
