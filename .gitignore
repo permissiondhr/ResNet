@@ -3,3 +3,8 @@ counter10_tb.v
 counter10.v
 a.out
 wrapper.vcd
+Waveform.json
+*.pptx
+*.xlsx
+*.zip
+ModelSimProject/*
