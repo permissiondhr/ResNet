@@ -8,38 +8,37 @@ module wrapper #(
 	input  wire 		      	verticle_sync,				// Verticle sync signal, start of one frame
 	input  wire 		      	mode_in,    				// Load parameter when disserted, Calculate when asserted
 	input  wire					data_in_valid,				// Data enable signal
-	input  wire			[15:0] 	data_in	[FM_DEPTH-1:0],
+	input  wire	signed	[15:0] 	data_in	[FM_DEPTH-1:0],
 	output wire					data_out_valid,
 	output wire					vs_next,
-	output wire 				latch_to_macro,					
 	output wire 				adc_to_macro,
 	output wire					enable_to_macro,
 	output wire					data_to_partial_valid,
-	output reg  signed	[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
-	output reg  signed  [15:0] 	res 	[FM_DEPTH-1:0][3:0]	// To residual module
+	output wire signed	[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0],
+	output wire signed  [15:0] 	res 	[FM_DEPTH-1:0][3:0]	// To residual module
 );
 
 // Internal signals
-reg [15:0] 	conv_core[FM_DEPTH-1:0][CORE_SIZE-1:0];	// Convolution core
-reg	[2:0]	cnt;						// Input data_in comes every 8 cycles
-reg [5:0]	row_num, col_num;			// Used to record current conv_core position
-reg 		conv_core_invalid;			// Indicates that first 2 row of input is useless, data_out_valid keeps low when this signal is high
-reg [6:0]	sram_addr_reg;				// Used to determine the sram r/w address
-reg [3:0]	cnt_latch_adc;				// Used to generate latch_to_macro and adc_to_macro signal
-wire		edge_l, edge_b;				// 0 indicates normal, 1 indicates conv_core is at left or bottom edge,
-wire[6:0]	sram_addr;					// Basically equals sram_addr_reg, but has a slight change
+reg			[15:0] 	data_mem[FM_DEPTH-1:0][2*FM_WIDTH+2:0];
+wire		[15:0]	conv_core[FM_DEPTH-1:0][CORE_SIZE-1:0];
+reg			[2:0]	cnt;						// Input data_in comes every 2 cycles
+reg 		[5:0]	row_num, col_num;			// Used to record current conv_core position
+reg 				conv_core_invalid;			// Indicates that first 2 row of input is useless, data_out_valid keeps low when this signal is high
+reg  signed	[7:0]	mem_addr;				// Used to determine register array address
+reg 		[3:0]	cnt_adc;				// Used to generate latch_to_macro and adc_to_macro signal
+wire				edge_l, edge_b;				// 0 indicates normal, 1 indicates conv_core is at left or bottom edge,
 
 always @(posedge clk or negedge rstn) begin
 	if(~rstn)
 		conv_core_invalid <= 1;
 	else begin
-		if ((row_num == 2) && (col_num == 1))
+		if ((row_num == 2) && (col_num == 0))
 			conv_core_invalid <= 0;
 		else ;
 	end
 end
 
-// Input data_in comes every 8 cycles (or more cycles in other layer such as layer4)
+// Input data_in comes every 2 cycles
 always @(posedge clk or negedge rstn) begin
 	if (~rstn)
 		cnt <= 0;
@@ -48,9 +47,13 @@ always @(posedge clk or negedge rstn) begin
 			cnt <= 0;
 		else begin
 			if (data_in_valid)
-				cnt <= 0;
-			else
-				cnt <= cnt + 1;
+				cnt <= 1;
+			else begin
+				if( cnt == 0)
+					cnt <= 0;
+				else
+					cnt <= cnt + 1;
+			end
 		end
 	end
 end
@@ -98,161 +101,70 @@ end
 assign edge_l = (col_num == 1) ? 1 : 0;
 assign edge_b = (row_num == 0) ? 1 : 0;
 
-// Calculate the SRAM address
+// Calculate the memory address, mem_addr counts from 0 to 2*FMWIDTH+2
 always @(posedge clk or negedge rstn) begin
 	if (~rstn)
-		sram_addr_reg <= 0;
+		mem_addr <= 0;
 	else begin
 		if (verticle_sync || (~mode_in))
-			sram_addr_reg <= 0;
+			mem_addr <= 0;
 		else begin
-			if (cnt == 0)
-				sram_addr_reg <= col_num + (!row_num[0]) * FM_WIDTH + 1;
-			else begin
-				if (cnt == 1)
-					sram_addr_reg <= col_num + (row_num[0]) * FM_WIDTH + 1;
+			if (data_in_valid) begin
+				if (mem_addr == 2*FM_WIDTH+2)
+					mem_addr <= 0;
 				else
-					sram_addr_reg <= sram_addr_reg;
+					mem_addr <= mem_addr + 1;
 			end
+			else ;
 		end
 	end
 end
-assign sram_addr = (sram_addr_reg == 2*FM_WIDTH) ? 0 : sram_addr_reg;
 
-reg	[15:0] sram_data_mem[FM_DEPTH-1 : 0][2*FM_WIDTH-1 : 0];
-
-genvar i, j;
+// Store input data to data_mem[mem_addr]
+genvar i;
 generate
+	integer j, k;
 	for (i = 0; i < FM_DEPTH; i=i+1) begin:build_conv_core
-		for (j = 0; j < 2*FM_WIDTH; j=j+1 ) begin
-			always @(posedge clk or negedge rstn) begin
-				if (~rstn)
-					sram_data_mem[i][j] <= 16'b0;
+		always @(posedge clk or negedge rstn) begin
+			if (~rstn)
+				for (j = 0; j < 2*FM_WIDTH+3; j=j+1 ) begin
+					data_mem[i][j] <= 16'b0;
+				end
+			else begin
+				if (verticle_sync || (~mode_in))
+					for (k = 0; k < 2*FM_WIDTH+3; k=k+1 ) begin
+						data_mem[i][k] <= 16'b0;
+					end
 				else begin
-					if ((mode_in == 1) && (data_in_valid == 1))
-						sram_data_mem[i][sram_addr] <= data_in[i];
+					if (data_in_valid == 1)
+						data_mem[i][mem_addr] <= data_in[i];
 					else ;
 				end
 			end
 		end
+		assign conv_core[i][0] = (mem_addr-1-114 < 0) ? data_mem[i][mem_addr-1-114+115] : data_mem[i][mem_addr-1-114] ;
+		assign conv_core[i][1] = (mem_addr-1-113 < 0) ? data_mem[i][mem_addr-1-113+115] : data_mem[i][mem_addr-1-113] ;
+		assign conv_core[i][2] = (mem_addr-1-112 < 0) ? data_mem[i][mem_addr-1-112+115] : data_mem[i][mem_addr-1-112] ;
+		assign conv_core[i][3] = (mem_addr-1-58  < 0) ? data_mem[i][mem_addr-1-58 +115] : data_mem[i][mem_addr-1-58 ] ;
+		assign conv_core[i][4] = (mem_addr-1-57  < 0) ? data_mem[i][mem_addr-1-57 +115] : data_mem[i][mem_addr-1-57 ] ;
+		assign conv_core[i][5] = (mem_addr-1-56  < 0) ? data_mem[i][mem_addr-1-56 +115] : data_mem[i][mem_addr-1-56 ] ;
+		assign conv_core[i][6] = (mem_addr-1-2   < 0) ? data_mem[i][mem_addr-1-2  +115] : data_mem[i][mem_addr-1-2  ] ;
+		assign conv_core[i][7] = (mem_addr-1-1   < 0) ? data_mem[i][mem_addr-1-1  +115] : data_mem[i][mem_addr-1-1  ] ;
+		assign conv_core[i][8] = data_mem[i][mem_addr-1];
 
-		always @(posedge clk or negedge rstn) begin
-			if(~rstn) begin
-				conv_core[i][0] <= 16'd0 ;
-				conv_core[i][1] <= 16'd0 ;
-				conv_core[i][2] <= 16'd0 ;
-				conv_core[i][3] <= 16'd0 ;
-				conv_core[i][4] <= 16'd0 ;
-				conv_core[i][5] <= 16'd0 ;
-				conv_core[i][6] <= 16'd0 ;
-				conv_core[i][7] <= 16'd0 ;
-				conv_core[i][8] <= 16'd0 ;
-			end
-			else begin
-				if (verticle_sync || (~mode_in)) begin
-					conv_core[i][0] <= 16'd0 ;
-					conv_core[i][1] <= 16'd0 ;
-					conv_core[i][2] <= 16'd0 ;
-					conv_core[i][3] <= 16'd0 ;
-					conv_core[i][4] <= 16'd0 ;
-					conv_core[i][5] <= 16'd0 ;
-					conv_core[i][6] <= 16'd0 ;
-					conv_core[i][7] <= 16'd0 ;
-					conv_core[i][8] <= 16'd0 ;					
-				end
-				else begin
-					case (cnt)
-						0:  begin
-								conv_core[i][0] <= conv_core[i][0] ;
-								conv_core[i][1] <= conv_core[i][1] ;
-								conv_core[i][2] <= conv_core[i][2] ;
-								conv_core[i][3] <= conv_core[i][3] ;
-								conv_core[i][4] <= conv_core[i][4] ;
-								conv_core[i][5] <= conv_core[i][5] ;
-								conv_core[i][6] <= conv_core[i][6] ;
-								conv_core[i][7] <= conv_core[i][7] ;
-								conv_core[i][8] <= sram_data_mem[i][sram_addr];
-							end
-						1:  begin
-								conv_core[i][0] <= conv_core[i][1] ;
-								conv_core[i][1] <= conv_core[i][2] ;
-								conv_core[i][2] <= conv_core[i][2] ;
-								conv_core[i][3] <= conv_core[i][4] ;
-								conv_core[i][4] <= conv_core[i][5] ;
-								conv_core[i][5] <= sram_data_mem[i][sram_addr];
-								conv_core[i][6] <= conv_core[i][7] ;
-								conv_core[i][7] <= conv_core[i][8] ;
-								conv_core[i][8] <= conv_core[i][8] ;
-							end		
-						2:  begin
-								conv_core[i][0] <= conv_core[i][0] ;
-								conv_core[i][1] <= conv_core[i][1] ;
-								conv_core[i][2] <= sram_data_mem[i][sram_addr];
-								conv_core[i][3] <= conv_core[i][3] ;
-								conv_core[i][4] <= conv_core[i][4] ;
-								conv_core[i][5] <= conv_core[i][5] ;
-								conv_core[i][6] <= conv_core[i][6] ;
-								conv_core[i][7] <= conv_core[i][7] ;
-								conv_core[i][8] <= conv_core[i][8] ;
-							end		
-						default: ;
-					endcase
-				end				
-			end
-		end
-		// Output
-		always @(posedge clk or negedge rstn) begin
-			if (~rstn) begin
-				data_out[i][0] <= 16'b0;
-				data_out[i][1] <= 16'b0;
-				data_out[i][2] <= 16'b0;
-				data_out[i][3] <= 16'b0;
-				data_out[i][4] <= 16'b0;
-				data_out[i][5] <= 16'b0;
-				data_out[i][6] <= 16'b0;
-				data_out[i][7] <= 16'b0;
-				data_out[i][8] <= 16'b0;
-				res[i][0] 	   <= 16'b0;
-				res[i][1] 	   <= 16'b0;
-				res[i][2] 	   <= 16'b0;
-				res[i][3] 	   <= 16'b0;				
-			end
-			else begin
-				if ((verticle_sync == 1) || (mode_in == 0)) begin
-					data_out[i][0] <= 16'b0;
-					data_out[i][1] <= 16'b0;
-					data_out[i][2] <= 16'b0;
-					data_out[i][3] <= 16'b0;
-					data_out[i][4] <= 16'b0;
-					data_out[i][5] <= 16'b0;
-					data_out[i][6] <= 16'b0;
-					data_out[i][7] <= 16'b0;
-					data_out[i][8] <= 16'b0;
-					res[i][0] 	   <= 16'b0;
-					res[i][1] 	   <= 16'b0;
-					res[i][2] 	   <= 16'b0;
-					res[i][3] 	   <= 16'b0;					
-				end
-				else begin
-					if (cnt == 1) begin
-						data_out[i][0] <= (edge_l == 1) 				? 0 : conv_core[i][0];
-						data_out[i][1] <= conv_core[i][1];
-						data_out[i][2] <= conv_core[i][2];
-						data_out[i][3] <= (edge_l == 1) 				? 0 : conv_core[i][3];
-						data_out[i][4] <= conv_core[i][4];
-						data_out[i][5] <= conv_core[i][5];
-						data_out[i][6] <= ((edge_l==1) || (edge_b==1)) ? 0 : conv_core[i][6];
-						data_out[i][7] <= (edge_b == 1) 				? 0 : conv_core[i][7];
-						data_out[i][8] <= (edge_b == 1) 				? 0 : conv_core[i][8];	
-						res[i][0]	   <= conv_core[i][1];
-						res[i][1]	   <= conv_core[i][2];
-						res[i][2]	   <= conv_core[i][4];
-						res[i][3]	   <= conv_core[i][5];											
-					end
-					else;
-				end	
-			end
-		end
+		assign data_out[i][0] = (edge_l == 1) 				? 0 : conv_core[i][0];
+		assign data_out[i][1] = conv_core[i][1];
+		assign data_out[i][2] = conv_core[i][2];
+		assign data_out[i][3] = (edge_l == 1) 				? 0 : conv_core[i][3];
+		assign data_out[i][4] = conv_core[i][4];
+		assign data_out[i][5] = conv_core[i][5];
+		assign data_out[i][6] = ((edge_l==1) || (edge_b==1))? 0 : conv_core[i][6];
+		assign data_out[i][7] = (edge_b == 1) 				? 0 : conv_core[i][7];
+		assign data_out[i][8] = (edge_b == 1) 				? 0 : conv_core[i][8];	
+		assign res[i][0]	  = conv_core[i][1];
+		assign res[i][1]	  = conv_core[i][2];
+		assign res[i][2]	  = conv_core[i][4];
+		assign res[i][3]	  = conv_core[i][5];
 	end
 endgenerate
 
@@ -262,29 +174,28 @@ assign data_out_valid = (~rstn) 			? 0 : (
 						row_num[0]			? 0 : (
 						~col_num[0]			? 0 : (
 						conv_core_invalid 	? 0 : (
-						(cnt == 2)			? 1 : 0))))));
+						(cnt == 1)			? 1 : 0))))));
 
-// cnt_latch_adc starts counting when data_out_valid is high, continue for 12 clock cycles and return to 0
+// cnt_adc starts counting when data_out_valid is high, continue for 12 clock cycles and return to 0
 always @(posedge clk or negedge rstn) begin
 	if (~rstn)
-		cnt_latch_adc <= 0;
+		cnt_adc <= 0;
 	else begin
 		if (data_out_valid == 1)
-			cnt_latch_adc <= 1;
+			cnt_adc <= 1;
 		else begin
-			case (cnt_latch_adc)
-				0:  	 cnt_latch_adc <= 0;
-				12: 	 cnt_latch_adc <= 0;
-				default: cnt_latch_adc <= cnt_latch_adc + 1;
+			case (cnt_adc)
+				0:  	 cnt_adc <= 0;
+				2: 	 	 cnt_adc <= 0;
+				default: cnt_adc <= cnt_adc + 1;
 			endcase
 		end	
 	end
 end
 
-assign adc_to_macro 	= ((cnt_latch_adc > 5) && (cnt_latch_adc < 9)) ? 1 : 0;	// adc high when cntla 5~7
-assign latch_to_macro   = (cnt_latch_adc > 8) ? 1 : 0;							// latch high when cntla 8~11 
-assign enable_to_macro 	= (cnt_latch_adc == 0) ? 0 : 1;							// enable hign wehn cntla != 0
-assign data_to_partial_valid = (cnt_latch_adc == 9) ? 1 : 0;
-assign vs_next 			= (conv_core_invalid == 0) && (row_num == 2) && (col_num == 0) && (cnt == 7);
+assign adc_to_macro 	= (cnt_adc == 1) ? 0 : 1;
+assign enable_to_macro 	= (cnt_adc == 0) ? 0 : 1;	// enable hign wehn cnt_adc != 0
+assign data_to_partial_valid = (cnt_adc == 2) ? 1 : 0;
+assign vs_next 			= (conv_core_invalid == 0) && (row_num == 2) && (col_num == 0) && (cnt == 2);
 
 endmodule

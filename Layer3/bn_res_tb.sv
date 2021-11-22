@@ -7,13 +7,13 @@ module bn_res_tb #(
 ) (
 );
 
-reg 						clk, rstn, data_in_valid;
-reg  [PARA_WIDTH - 1 : 0] 	bn_a     [CHANNEL_NUM - 1 : 0];
-reg  [PARA_WIDTH - 1 : 0] 	bn_b     [CHANNEL_NUM - 1 : 0];
-reg  [DATA_WIDTH - 1 : 0] 	res      [FM_DEPTH - 1 : 0];
-reg  [7 : 0]				data_in  [CHANNEL_NUM-1:0];
-wire [DATA_WIDTH - 1 : 0]	data_out [CHANNEL_NUM-1:0];
-wire						data_out_valid;
+reg 								clk, rstn, data_in_valid;
+reg 		[PARA_WIDTH - 1 : 0] 	bn_a     [CHANNEL_NUM - 1 : 0];
+reg 		[PARA_WIDTH - 1 : 0] 	bn_b     [CHANNEL_NUM - 1 : 0];
+reg 		[DATA_WIDTH - 1 : 0] 	res      [FM_DEPTH - 1 : 0];
+reg  signed	[7 : 0]					data_in  [CHANNEL_NUM-1:0];
+wire signed	[DATA_WIDTH - 1 : 0]	data_out [CHANNEL_NUM-1:0];
+wire								data_out_valid;
 
 reg  [3:0] 	cnt;
 initial begin

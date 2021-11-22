@@ -1,13 +1,13 @@
 module top_layer3 #(
-	parameter FM_DEPTH 	  = 64,
-	parameter FM_WIDTH 	  = 56,
-	parameter CHANNEL_NUM = 128,
-	parameter LOG2CHANNEL_NUM = 7,
-	parameter MACRO_NUM   = 4,
-	parameter PARA_NUM		= 6,
-	parameter DATA_WIDTH  = 16,
-	parameter PARA_WIDTH  = 16,
-	parameter CORE_SIZE   = 9
+	parameter FM_DEPTH 	        = 64,
+	parameter FM_WIDTH 	        = 56,
+	parameter CHANNEL_NUM       = 128,
+	parameter LOG2CHANNEL_NUM   = 7,
+	parameter MACRO_NUM         = 4,
+	parameter PARA_NUM		    = 6,
+	parameter DATA_WIDTH        = 16,
+	parameter PARA_WIDTH        = 16,
+	parameter CORE_SIZE         = 9
 ) (
 	input 	wire							clk,
 	input 	wire							rstn,
@@ -49,7 +49,6 @@ wrapper #(
 	.data_in				(data_in),
 	.data_out_valid			(valid_wrapper_rsign),
 	.vs_next				(vs_next),
-	.latch_to_macro			(latch_to_macro),
 	.adc_to_macro			(adc_to_macro),
 	.enable_to_macro		(enable_to_macro),
 	.data_to_partial_valid	(data_to_partial_valid),
@@ -71,8 +70,22 @@ rsign #(
     .data_out		(data_rsign_macro)
 );
 
-wire [4:0] data_macro_decoder 	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
-wire signed[3:0] data_decoder_partial	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
+wire        [3:0] data_macro_decoder 	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
+
+macro_layer3 #(
+    .FM_DEPTH       (FM_DEPTH   ),
+    .CORE_SIZE      (CORE_SIZE  ),
+    .MACRO_NUM      (MACRO_NUM  ),
+    .CHANNEL_NUM    (CHANNEL_NUM)
+) inst_macro_layer3(
+    .enable         (enable_to_macro),
+    .adc            (adc_to_macro),
+    .chs_ps         (2'b00),
+    .data_in        (data_rsign_macro),
+    .data_out       (data_macro_decoder)
+);
+
+wire signed [3:0] data_decoder_partial	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
 
 decoder #(
     .CHANNEL_NUM	(CHANNEL_NUM),
@@ -82,8 +95,8 @@ decoder #(
     .data_out		(data_decoder_partial)
 );
 
-wire 		valid_partial_bn;
-wire signed[7:0]	data_partial_bn	[CHANNEL_NUM-1:0];
+wire 		        valid_partial_bn;
+wire signed [7:0]	data_partial_bn	[CHANNEL_NUM-1:0];
 
 partial_sum #(
     .CHANNEL_NUM	(CHANNEL_NUM),
@@ -99,7 +112,7 @@ partial_sum #(
 
 wire signed [DATA_WIDTH - 1 : 0] 	data_bn_rprelu [CHANNEL_NUM - 1 : 0];
 wire								valid_bn_rprelu;
-wire signed [DATA_WIDTH-1 : 0]	res_pooling_bn[FM_DEPTH-1:0];
+wire signed [DATA_WIDTH-1 : 0]	    res_pooling_bn[FM_DEPTH-1:0];
 
 bn_res #(
     .DATA_WIDTH 	(DATA_WIDTH ),

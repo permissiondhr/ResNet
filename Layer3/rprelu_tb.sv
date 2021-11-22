@@ -36,7 +36,7 @@ initial begin
     data_in_valid = 0;
 end
 always @(posedge clk ) begin
-    if (cnt == 15)
+    if (cnt == 4)
         data_in_valid <= 1;
     else
         data_in_valid <= 0;
@@ -55,7 +55,7 @@ genvar i, j;
 generate
     for (i = 0; i < CHANNEL_NUM; i=i+1) begin
 		always @(posedge clk ) begin
-			if (cnt == 15)
+			if (cnt == 4)
 				data_in[i] <= $random;
 			else
 				data_in[i] <= data_in[i];

@@ -8,18 +8,11 @@ module wrapper_tb #(
 
 reg clk, rstn, mode_in, verticle_sync, data_in_valid;
 reg  	[15:0] 	data_in[FM_DEPTH-1:0];
-wire data_out_valid, vs_next, latch_to_macro, adc_to_macro;
+wire data_out_valid, vs_next, adc_to_macro;
 wire 	[15:0]	data_out[FM_DEPTH-1:0][CORE_SIZE-1:0];
 wire  	[15:0] 	res [FM_DEPTH-1:0][3:0];
 
-reg [2:0]cnt;
-
-//initial begin
-//    $dumpfile("wrapper.vcd");
-//    $dumpvars(0, wrapper_tb);
-//    # 10000
-//    $finish;
-//end
+reg cnt;
 
 initial begin
     clk = 0;
@@ -51,7 +44,7 @@ initial begin
     data_in_valid = 0;
 end
 always @(posedge clk ) begin
-    if (cnt == 7)
+    if (cnt == 1)
         data_in_valid <= 1;
     else
         data_in_valid <= 0;
@@ -61,7 +54,7 @@ genvar i;
 generate
     for (i = 0;i < FM_DEPTH ; i=i+1) begin
         always @(posedge clk ) begin
-            if (cnt == 7)
+            if (cnt == 1)
                 data_in[i] <= $random;
             else
                 data_in[i] <= data_in[i];
@@ -85,7 +78,6 @@ wrapper #(
 	.vs_next        (vs_next),
 	.data_out       (data_out),
 	.res            (res),
-    .latch_to_macro (latch_to_macro),
     .adc_to_macro   (adc_to_macro)
 );
 
