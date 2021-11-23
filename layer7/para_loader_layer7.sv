@@ -1,35 +1,17 @@
-// Copyright (c) 2021 by the author(s)
-//
-// Filename  : 	para_loader_layer5.sv
-// Directory : 	C:\Users\seeyo\Desktop\L5
-// Author    : 	LiuJintan
-// CreateDate: 	11 月 13, 2021	16:12
-// Mail: <liujintan@stu.pku.edu.cn>
-// -----------------------------------------------------------------------------
-// DESCRIPTION:
-// This module implements...
-//
-// -----------------------------------------------------------------------------
-// VERSION: 1.0.0
-//
+
 `include "defines.v"
-module para_loader_layer5
+module para_loader_layer7
 #(
-    parameter FM_DEPTH        = 'd128,         // Depth of the Feature Map
-    //parameter LOG2FM_DEPTH    = 'd7  ,         // Log2(FM_DEPTH)
-    parameter LOG2CHANNEL_NUM = 'd8  ,
-    parameter CHANNEL_NUM     = 'd256          // Channel number of Macro
+    parameter FM_DEPTH        = 256,         // Depth of the Feature Map
+    parameter LOG2CHANNEL_NUM = 9  ,
+    parameter CHANNEL_NUM     = 512          // Channel number of Macro
 )
 (
-    // GLOBAL SIGNALS
     input  wire                              clk                              , // System Clock
-                                             rst_n                            , // System Reset, Active LOW
-                                             mode                             , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
-    // Input Parameter & Enble Signal
-                                             data_e_para                      , // Para data Enable signal, Active HIGH
+    input  wire                              rst_n                            , // System Reset, Active LOW
+    input  wire                              mode                             , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
+    input  wire                              data_e_para                      , // Para data Enable signal, Active HIGH
     input  wire signed [`PARA_WIDTH - 1 : 0] para_in                          , // Parameter input
-    // Inpus From Wrapper, Choose Signal
-    // Output Parameters                     
     output reg  signed [`PARA_WIDTH - 1 : 0] rsign_para  [   FM_DEPTH - 1 : 0],    
     output reg  signed [`PARA_WIDTH - 1 : 0] bn_a        [CHANNEL_NUM - 1 : 0],
     output reg  signed [`PARA_WIDTH - 1 : 0] bn_b        [CHANNEL_NUM - 1 : 0],

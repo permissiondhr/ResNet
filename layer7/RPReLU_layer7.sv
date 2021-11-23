@@ -1,42 +1,23 @@
-// Copyright (c) 2021 by the author(s)
-//
-// Filename  : 	RPReLU_layer5.sv
-// Directory : 	C:\Users\seeyo\Desktop\L5
-// Author    : 	LiuJintan
-// CreateDate: 	11 月 13, 2021	16:02
-// Mail: <liujintan@stu.pku.edu.cn>
-// -----------------------------------------------------------------------------
-// DESCRIPTION:
-// This module implements...
-//
-// -----------------------------------------------------------------------------
-// VERSION: 1.0.0
-//
+
 `include "defines.v"
-module RPReLU_layer5
+module RPReLU_layer7
 #(
-    parameter CHANNEL_NUM  = 'd256         // Channel number of Macro
+    parameter CHANNEL_NUM  = 512         // Channel number of Macro
 )
 (
-    // GLOBAL SIGNALS
     input  wire                              clk                              ,  // System Clock
-                                             rst_n                            ,  // System Reset, Active LOW
-                                             // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
-                                             mode                             ,
-    // SIGNALS FROM BN
+    input  wire                              rst_n                            ,  // System Reset, Active LOW
+    input  wire                              mode                             ,
     input  wire signed [`DATA_WIDTH - 1 : 0] data_in     [CHANNEL_NUM - 1 : 0],  // Data from bn
     input  wire                              data_e                           ,
-    // SIGNALS FROM para_loader
     input  wire signed [`PARA_WIDTH - 1 : 0] rprelu_beta [CHANNEL_NUM - 1 : 0],  // Hyper-parameter of RPReLU 
     input  wire signed [`PARA_WIDTH - 1 : 0] rprelu_gamma[CHANNEL_NUM - 1 : 0],  // Hyper-parameter of RPReLU
     input  wire signed [`PARA_WIDTH - 1 : 0] rprelu_zeta [CHANNEL_NUM - 1 : 0],  // Hyper-parameter of RPReLU
-    // OUTPUT SIGNALS TO NEXT LAYER(5)
     output wire signed [`DATA_WIDTH - 1 : 0] data_out    [CHANNEL_NUM - 1 : 0],  // DATA to next layer(5)
     output reg                               data_e_out                          //DATA Enable signals
 );
     
     reg signed [`DATA_WIDTH * 2 - 1 : 0] data_out_reg[CHANNEL_NUM - 1 : 0];           // Format: xxxx_xxxx.xxxx_xxxx
-
     reg signed [`DATA_WIDTH * 2 - 1 : 0] data_gamma[CHANNEL_NUM - 1 : 0];
     reg signed [`DATA_WIDTH * 2 - 1 : 0] beta_data_gamma[CHANNEL_NUM - 1 : 0];
     reg data_e_dg, data_e_bdg;

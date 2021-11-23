@@ -1,45 +1,24 @@
-// Copyright (c) 2021 by the author(s)
-//
-// Filename  : 	wrapper_layer5.sv
-// Directory : 	C:\Users\seeyo\Desktop\L5
-// Author    : 	LiuJintan
-// CreateDate: 	11 月 13, 2021	10:20
-// Mail: <liujintan@stu.pku.edu.cn>
-// -----------------------------------------------------------------------------
-// DESCRIPTION:
-// This module implements...
-//
-// -----------------------------------------------------------------------------
-// VERSION: 1.0.0
-//
+
 `include "defines.v"
-module wrapper_layer5
+module wrapper_layer7
 #(
-    parameter FM_DEPTH     = 'd128,         // Depth of the Feature Map
-    parameter FM_WIDTH     = 'd28          // Width of the Feature Map
+    parameter FM_DEPTH     = 256,         // Depth of the Feature Map
+    parameter FM_WIDTH     = 14          // Width of the Feature Map
 )
 (
-    // GLOBAL SIGNALS
     input  wire                              clk                              , // System Clock
-                                             rst_n                            , // System Reset, Active LOW
-                                             mode                             , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
-    // Input from previous layer(layer5)
+    input  wire                              rst_n                            , // System Reset, Active LOW
+    input  wire                              mode                             , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
     input  wire                              data_e                           , // DATA Enable signal, Active HIGH
-                                             vs                               , // Vsync Signal
+    input  wire                              vs                               , // Vsync Signal
     input  wire signed [`DATA_WIDTH - 1 : 0] data_in [FM_DEPTH - 1 : 0]       ,
-    // Outputs to RSign
-    output wire signed [`DATA_WIDTH - 1 : 0] data_out[FM_DEPTH - 1 : 0][8 : 0], // FM_DEPTH / 4
+    output wire signed [`DATA_WIDTH - 1 : 0] data_out[FM_DEPTH - 1 : 0][8 : 0], // FM_DEPTH / 8
     output reg                               data_e_out                       , // DATA Enable signal, Active HIGH
-    // Outputs to bn_res
     output reg  signed [`DATA_WIDTH - 1 : 0] res     [FM_DEPTH - 1 : 0]       ,
-    // Outputs to macro
-    output wire                              //latch                            ,
-                                             adc                              ,
-                                             macro_e                          ,
-    // Outputs to next layer
+    output wire                              adc                              ,
+    output wire                              macro_e                          ,
     output wire                              vs_next                          ,
     output reg         [1 : 0]               chs_macro                        ,
-    // Outputs to decoder
     output wire                              data_e_out_de
 );
 
@@ -217,8 +196,8 @@ module wrapper_layer5
 
     // ****** Matrix / Data_out Generator
     genvar i;
-    generate for(i = 0; i < FM_DEPTH; i = i + 1) begin: data_out_res_loop
-
+    generate 
+        for(i = 0; i < FM_DEPTH; i = i + 1) begin: data_out_res_loop
         // ??????????????????????????????????????????
         // ****** Pooling ******
         always @(posedge clk or negedge rst_n) begin
@@ -254,7 +233,7 @@ module wrapper_layer5
         assign data_out[i][7] = (              edg_c == 1) ? 0 : data_mem[addr7][i];
         assign data_out[i][8] = (              edg_c == 1) ? 0 : data_mem[addr8][i];
 
-    end // for i
+        end // for i
     endgenerate // generate
 
     // ****** Data_Enable for decoder ******

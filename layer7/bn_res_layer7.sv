@@ -1,45 +1,24 @@
-// Copyright (c) 2021 by the author(s)
-//
-// Filename  : 	bn_res_layer5.sv
-// Directory : 	C:\Users\seeyo\Desktop\L5
-// Author    : 	LiuJintan
-// CreateDate: 	11 月 13, 2021	15:57
-// Mail: <liujintan@stu.pku.edu.cn>
-// -----------------------------------------------------------------------------
-// DESCRIPTION:
-// This module implements...
-//
-// -----------------------------------------------------------------------------
-// VERSION: 1.0.0
-//
 `include "defines.v"
-module bn_res_layer5
+module bn_res_layer7
 #(
-    parameter FM_DEPTH     = 'd128,         // Depth of the Feature Map
-    parameter CHANNEL_NUM  = 'd256          // Channel number of Macro
+    parameter FM_DEPTH     = 256,         // Depth of the Feature Map
+    parameter CHANNEL_NUM  = 512          // Channel number of Macro
 )
 (
-    // GLOBAL SIGNALS
     input  wire                              clk                          , // System Clock
-                                             rst_n                        , // System Reset, Active LOW
-                                             mode                         , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
-    // Input from partial_sum
+    input  wire                              rst_n                        , // System Reset, Active LOW
+    input  wire                              mode                         , // Mode Switch, LOW -> Reload parameter; HIGH -> Calculate
     input  wire signed [`DATA_WIDTH - 1 : 0] data_in [CHANNEL_NUM - 1 : 0],
     input  wire                              data_e                       ,
-    // Input from para loader
     input  wire signed [`PARA_WIDTH - 1 : 0] bn_a    [CHANNEL_NUM - 1 : 0],
     input  wire signed [`PARA_WIDTH - 1 : 0] bn_b    [CHANNEL_NUM - 1 : 0],
-    // Input from wrapper
     input  wire signed [`DATA_WIDTH - 1 : 0] res     [FM_DEPTH    - 1 : 0],
-    // Outputs to RPReLU
     output wire signed [`DATA_WIDTH - 1 : 0] data_out[CHANNEL_NUM - 1 : 0],
     output reg                               data_e_out
 );
 
     reg  signed [`DATA_WIDTH * 2 - 1 : 0] data_out_reg[CHANNEL_NUM - 1 : 0];    // register of data_out, 32bit
     wire signed [`DATA_WIDTH - 1 : 0] res_ext[CHANNEL_NUM - 1 : 0]; 
-
-    //assign res_ext = {res, res};
 
     genvar i;
     generate for(i = 0; i < CHANNEL_NUM; i = i + 1) begin: data_out_reg_loop
@@ -65,9 +44,7 @@ module bn_res_layer5
             data_e_out      <= `DATAINVALID;
         end // if
     end // always
-
-
-
+    
     genvar j;
     generate
         for(j = 0; j < CHANNEL_NUM; j = j + 1) begin: data_out_loop
