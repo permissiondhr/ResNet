@@ -13,12 +13,12 @@
 // VERSION: 1.0.0
 //
 `include "defines.v"
-module para_loader_layer7
+module para_loader_layer5
 #(
-    parameter FM_DEPTH        = 'd256,         // Depth of the Feature Map
+    parameter FM_DEPTH        = 'd128,         // Depth of the Feature Map
     //parameter LOG2FM_DEPTH    = 'd7  ,         // Log2(FM_DEPTH)
-    parameter LOG2CHANNEL_NUM = 'd9  ,
-    parameter CHANNEL_NUM     = 'd512          // Channel number of Macro
+    parameter LOG2CHANNEL_NUM = 'd8  ,
+    parameter CHANNEL_NUM     = 'd256          // Channel number of Macro
 )
 (
     // GLOBAL SIGNALS

@@ -1,8 +1,22 @@
+// Copyright (c) 2021 by the author(s)
+//
+// Filename  : 	wrapper_layer5.sv
+// Directory : 	C:\Users\seeyo\Desktop\L5
+// Author    : 	LiuJintan
+// CreateDate: 	11 月 13, 2021	10:20
+// Mail: <liujintan@stu.pku.edu.cn>
+// -----------------------------------------------------------------------------
+// DESCRIPTION:
+// This module implements...
+//
+// -----------------------------------------------------------------------------
+// VERSION: 1.0.0
+//
 `include "defines.v"
-module wrapper_layer7
+module wrapper_layer5
 #(
-    parameter FM_DEPTH     = 'd256,         // Depth of the Feature Map
-    parameter FM_WIDTH     = 'd14          // Width of the Feature Map
+    parameter FM_DEPTH     = 'd128,         // Depth of the Feature Map
+    parameter FM_WIDTH     = 'd28          // Width of the Feature Map
 )
 (
     // GLOBAL SIGNALS
@@ -19,7 +33,7 @@ module wrapper_layer7
     // Outputs to bn_res
     output reg  signed [`DATA_WIDTH - 1 : 0] res     [FM_DEPTH - 1 : 0]       ,
     // Outputs to macro
-    output wire                              latch                            ,
+    output wire                              //latch                            ,
                                              adc                              ,
                                              macro_e                          ,
     // Outputs to next layer
@@ -30,21 +44,19 @@ module wrapper_layer7
 );
 
     // counter
-    reg [3 : 0] w_r;
+    reg [1 : 0] w_r;
     reg [4 : 0] row,
                 col;
     //reg counter_ds; // counter for down simple
 
     // Location of the Conv Core
-    wire edg_n_r, // 1 -> left  , 0 -> others
-         edg_n_c; // 1 -> bottom, 0 -> others
+    wire edg_r, // 1 -> left  , 0 -> others
+         edg_c; // 1 -> bottom, 0 -> others
 
     // Addr
-    reg  [5 : 0] addr_reg;
-    wire [5 : 0] addr    ;
-
-    // Conv Matrix
-    reg [`DATA_WIDTH - 1 : 0] matrix[FM_DEPTH - 1 : 0][8 : 0];
+    reg  [5 : 0] addr_reg8, addr_reg5;
+    wire [5 : 0] addr8    , addr5    ;
+    wire [5 : 0] addr3, addr4, addr6, addr7;
 
     // First pic Flag
     reg first_pic_n;
@@ -52,6 +64,7 @@ module wrapper_layer7
     // Data_reg
     // reg signed [`DATA_WIDTH - 1 : 0] data_out_reg[FM_DEPTH - 1 : 0][8 : 0];
     reg signed [`DATA_WIDTH - 1 : 0] data_mem[2 * FM_WIDTH - 1 : 0][FM_DEPTH - 1 : 0];
+    reg signed [`DATA_WIDTH - 1 : 0] data_012_reg[2 : 0][FM_DEPTH - 1 : 0];
     // Res
     reg signed [17 : 0] res_reg[FM_DEPTH - 1 : 0];
 
@@ -59,7 +72,7 @@ module wrapper_layer7
     always @(posedge clk or negedge rst_n) begin    // first picture flag, Active LOW
         if(rst_n == `RSTVALID) begin
             first_pic_n = 1'b0; 
-        end else if(row == 0 && col == 2 && w_r == 15) begin
+        end else if(row == 0 && col == 2 && w_r == 3) begin
             first_pic_n = 1'b1;
         end else begin
             first_pic_n = first_pic_n;
@@ -81,12 +94,12 @@ module wrapper_layer7
     // ****** w_r counter generator ******
     always @(posedge clk or negedge rst_n) begin
         if(rst_n == `RSTVALID ) begin
-	        w_r <= 'd15;
+	        w_r <= 'd3;
 	    end else if(vs == `VSVALID) begin
-            w_r <= 'd15;
+            w_r <= 'd3;
         end else if(data_e == `DATAVALID) begin
             w_r <= 'b0 ;
-        end else if(mode == `CALCULATE && w_r < 'd15) begin
+        end else if(mode == `CALCULATE && w_r < 'd3) begin
             w_r <= w_r + 1'b1;
         end else begin
             w_r <= w_r;
@@ -112,13 +125,6 @@ module wrapper_layer7
         end // if
     end // always
 
-
-    // ***** Location of Next Matrix *****
-    assign edg_n_r = (row == 0) ? 1 :     // row == 1 indicate that the Matrix is on the LEFT of FM
-                                  0 ;     // other cases indicate that the Matrix is in the MIDDLE of FM
-    assign edg_n_c = (col == 0) ? 1 :     // col == 1 indicate that the Matrix is on the BOTTOM of FM
-                                  0 ;     // other cases indicate that the Matrix is in the MIDDLE of FM
-
     // ****** Location Current Matrix
     assign edg_r = (row == 1) ? 1 :
                                 0 ;
@@ -130,19 +136,40 @@ module wrapper_layer7
     // ***** addr_generator *****
     always @(posedge clk or negedge rst_n) begin
         if(rst_n == `RSTVALID)begin
-	        addr_reg <= 0;
+	        addr_reg8 <= 0;
         end else if(vs == `VSVALID) begin
-            addr_reg <= 0;
-        end else if(w_r == 1) begin // Caculate Addr for reading data of Matrix[5]
-            addr_reg <= row + (!col[0]) * FM_WIDTH + 1;
+            addr_reg8 <= 0;
         end else if(w_r == 2) begin // Caculate Addr for reading data of Matrix[2]
-            addr_reg <= row +   col[0]  * FM_WIDTH + 1;
+            addr_reg8 <= row + col[0] * FM_WIDTH + 1;
         end else begin
-            addr_reg <= addr_reg;
+            addr_reg8 <= addr_reg8;
         end// if
     end // always
 
-    assign addr = (addr_reg == 2 * FM_WIDTH) ? 0 : addr_reg;
+    always @(posedge clk or negedge rst_n) begin
+        if(rst_n == `RSTVALID)begin
+	        addr_reg5 <= 28;
+        end else if(vs == `VSVALID) begin
+            addr_reg5 <= 28;
+        end else if(w_r == 2) begin // Caculate Addr for reading data of Matrix[5]
+            addr_reg5 <= row + (!col[0]) * FM_WIDTH + 1;
+        end else begin
+            addr_reg5 <= addr_reg5;
+        end// if
+    end // always
+
+    assign addr8 = (addr_reg8 == 2 * FM_WIDTH) ? 0 : addr_reg8;
+    assign addr5 = (addr_reg5 == 2 * FM_WIDTH) ? 0 : addr_reg5;
+    assign addr7 = (addr8 == 0) ? 55       : 
+                                  addr8 - 1;
+    assign addr6 = (addr8 == 0) ? 54       : 
+                   (addr8 == 1) ? 55       :
+                                  addr8 - 2;
+    assign addr4 = (addr5 == 0) ? 55       :
+                                  addr5 - 1;
+    assign addr3 = (addr5 == 0) ? 54       : 
+                   (addr5 == 1) ? 55       :
+                                  addr5 - 2;
 
     //reg signed [`DATA_WIDTH - 1 : 0] data_mem[2 * FM_WIDTH - 1 : 0][FM_DEPTH - 1 : 0];
 
@@ -155,69 +182,50 @@ module wrapper_layer7
                     data_mem[n][m] <= 16'b0;
                 end // for n
             end else if (mode == `CALCULATE && data_e == `DATAVALID) begin    // indicate that when w_r == 2, read register
-                data_mem[addr][m] <= data_in[m]; 
+                data_mem[addr8][m] <= data_in[m]; 
             end else begin
                 for(n = 0; n < 2 * FM_WIDTH; n = n + 1) begin
                     data_mem[n][m] <= data_mem[n][m];
                 end // for n
             end // if
         end // always
+
+        always @(posedge clk or negedge rst_n) begin
+            if(rst_n == `RSTVALID) begin
+                data_012_reg[2][m] <= 16'b0;
+                data_012_reg[1][m] <= 16'b0;
+                data_012_reg[0][m] <= 16'b0;
+            end else if (mode == `CALCULATE && data_e == `DATAVALID) begin
+                data_012_reg[2][m] <= data_mem[addr8][m];
+                data_012_reg[1][m] <= data_012_reg[2][m];
+                data_012_reg[0][m] <= data_012_reg[1][m];
+            end else begin
+                data_012_reg[2][m] <= data_012_reg[2][m];
+                data_012_reg[1][m] <= data_012_reg[1][m];
+                data_012_reg[0][m] <= data_012_reg[0][m];
+            end // if 
+        end // always
     end // for m
     endgenerate
 
     // ****** Signals To Macro ******
-    assign latch   = ((mode == `CALCULATE) && (w_r >  0) && (w_r <  5)) ? 1'b1 : 1'b0;
-    assign adc     = ((mode == `CALCULATE) && (w_r >  0) && (w_r <  6)) ? 1'b0 : 1'b1;
-    assign macro_e = first_pic_n && (w_r > 0) && (w_r < 9);
-    assign vs_next = ( row  == 3         ) && (col == 2) && (w_r == 5);
+    //assign latch   = ((mode == `CALCULATE) && (w_r >  0) && (w_r <  5)) ? 1'b1 : 1'b0;
+    assign adc     = !(first_pic_n && (w_r == 1));
+    assign macro_e = first_pic_n && (w_r > 0) && (w_r < 3);
+    assign vs_next = (row  == 4) && (col == 2) && (w_r == 2);
 
 
     // ****** Matrix / Data_out Generator
     genvar i;
-    generate for(i = 0; i < FM_DEPTH; i = i + 1) begin: matrix_data_out_loop
-        // generate Matrix
-        always @(posedge clk or negedge rst_n) begin
-            if(rst_n == `RSTVALID) begin
-                matrix[i][0] <= 16'h0000;
-                matrix[i][1] <= 16'h0000;
-                matrix[i][2] <= 16'h0000;
-                matrix[i][3] <= 16'h0000;
-                matrix[i][4] <= 16'h0000;
-                matrix[i][5] <= 16'h0000;
-                matrix[i][6] <= 16'h0000;
-                matrix[i][7] <= 16'h0000;
-                matrix[i][8] <= 16'h0000;
-            end else if(mode == `CALCULATE && w_r == 0) begin
-                matrix[i][8] <= data_mem[addr][i];
-	        end else if(mode == `CALCULATE && w_r == 2) begin
-                matrix[i][0] <= matrix[i][1];
-                matrix[i][3] <= matrix[i][4];
-                matrix[i][6] <= matrix[i][7];
-                matrix[i][1] <= matrix[i][2];
-                matrix[i][4] <= matrix[i][5];
-                matrix[i][7] <= matrix[i][8];
-                matrix[i][5] <= data_mem[addr][i];
-            end else if(mode == `CALCULATE && w_r == 3) begin
-                matrix[i][2] <= data_mem[addr][i];
-            end else begin
-		        matrix[i][0] <= matrix[i][0];
-                matrix[i][1] <= matrix[i][1];
-                matrix[i][2] <= matrix[i][2];
-                matrix[i][3] <= matrix[i][3];
-                matrix[i][4] <= matrix[i][4];
-                matrix[i][5] <= matrix[i][5];
-                matrix[i][6] <= matrix[i][6];
-                matrix[i][7] <= matrix[i][7];
-                matrix[i][8] <= matrix[i][8];
-	        end // if
-        end // always
+    generate for(i = 0; i < FM_DEPTH; i = i + 1) begin: data_out_res_loop
 
+        // ??????????????????????????????????????????
         // ****** Pooling ******
         always @(posedge clk or negedge rst_n) begin
             if(rst_n == `RSTVALID) begin
                 res_reg[i] <= 18'b0;
             end else if(data_e_out == `DATAVALID) begin
-                res_reg[i] <= matrix[i][1] + matrix[i][2] + matrix[i][4] + matrix[i][5];
+                res_reg[i] <= data_012_reg[1][i] + data_012_reg[2][i] + data_mem[addr4][i] + data_mem[addr5][i];
             end else begin
                 res_reg[i] <= res_reg[i];
             end // if
@@ -236,20 +244,18 @@ module wrapper_layer7
         // ****** Data_out ******
 
         // For saving area, ALL output data will be send to the RSign module to storage
-        assign data_out[i][0] = (edg_r == 1              ) ? 0 : matrix[i][0];
-        assign data_out[i][1] =                                  matrix[i][1];
-        assign data_out[i][2] =                                  matrix[i][2];
-        assign data_out[i][3] = (edg_r == 1              ) ? 0 : matrix[i][3];
-        assign data_out[i][4] =                                  matrix[i][4];
-        assign data_out[i][5] =                                  matrix[i][5];
-        assign data_out[i][6] = (edg_r == 1 || edg_c == 1) ? 0 : matrix[i][6];
-        assign data_out[i][7] = (              edg_c == 1) ? 0 : matrix[i][7];
-        assign data_out[i][8] = (              edg_c == 1) ? 0 : data_mem[addr][i];
+        assign data_out[i][0] = (edg_r == 1              ) ? 0 : data_012_reg[0][i];
+        assign data_out[i][1] =                                  data_012_reg[1][i];
+        assign data_out[i][2] =                                  data_012_reg[2][i];
+        assign data_out[i][3] = (edg_r == 1              ) ? 0 : data_mem[addr3][i];
+        assign data_out[i][4] =                                  data_mem[addr4][i];
+        assign data_out[i][5] =                                  data_mem[addr5][i];
+        assign data_out[i][6] = (edg_r == 1 || edg_c == 1) ? 0 : data_mem[addr6][i];
+        assign data_out[i][7] = (              edg_c == 1) ? 0 : data_mem[addr7][i];
+        assign data_out[i][8] = (              edg_c == 1) ? 0 : data_mem[addr8][i];
 
     end // for i
     endgenerate // generate
-
-
 
     // ****** Data_Enable for decoder ******
     assign data_e_out_de_tmp = (w_r == 1) && first_pic_n;
@@ -267,8 +273,5 @@ module wrapper_layer7
     end // always
 
     assign data_e_out_de = first_flag_de && (data_e_out_de_tmp == `DATAVALID);
-
-
-
 
 endmodule // wrapper_layer5

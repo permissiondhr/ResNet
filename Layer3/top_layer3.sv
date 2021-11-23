@@ -56,7 +56,7 @@ wrapper #(
 	.res					(res_wrapper_pooling)
 );
 
-wire data_rsign_macro	[FM_DEPTH-1:0][CORE_SIZE-1:0];
+wire data_rsign_macro[FM_DEPTH-1:0][CORE_SIZE-1:0];
 
 rsign #(
     .FM_DEPTH 		(FM_DEPTH ),
@@ -70,44 +70,36 @@ rsign #(
     .data_out		(data_rsign_macro)
 );
 
-wire        [3:0] data_macro_decoder 	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
-
+wire signed [3:0] data_macro_partial_sum[MACRO_NUM-1:0][63:0];
 macro_layer3 #(
     .FM_DEPTH       (FM_DEPTH   ),
     .CORE_SIZE      (CORE_SIZE  ),
-    .MACRO_NUM      (MACRO_NUM  ),
-    .CHANNEL_NUM    (CHANNEL_NUM)
+    .MACRO_NUM      (MACRO_NUM  )
 ) inst_macro_layer3(
     .enable         (enable_to_macro),
     .adc            (adc_to_macro),
     .chs_ps         (2'b00),
     .data_in        (data_rsign_macro),
-    .data_out       (data_macro_decoder)
-);
-
-wire signed [3:0] data_decoder_partial	[CHANNEL_NUM - 1 : 0][MACRO_NUM-1:0];
-
-decoder #(
-    .CHANNEL_NUM	(CHANNEL_NUM),
-    .MACRO_NUM  	(MACRO_NUM  )
-) inst_decoder(
-    .data_in 		(data_macro_decoder),
-    .data_out		(data_decoder_partial)
+    .data_out       (data_macro_partial_sum)
 );
 
 wire 		        valid_partial_bn;
 wire signed [7:0]	data_partial_bn	[CHANNEL_NUM-1:0];
-
-partial_sum #(
-    .CHANNEL_NUM	(CHANNEL_NUM),
-    .MACRO_NUM  	(MACRO_NUM  )
-) inst_partial_sum (
+partial_sum inst_partial_sum_0 (
     .clk			(clk),
     .rstn			(rstn),
     .data_in_valid	(data_to_partial_valid),
-    .data_in		(data_decoder_partial),
+    .data_in		(data_macro_partial_sum[1:0]),
     .data_out_valid	(valid_partial_bn),
-    .data_out		(data_partial_bn)
+    .data_out		(data_partial_bn[63:0])
+);
+
+partial_sum inst_partial_sum_1 (
+    .clk			(clk),
+    .rstn			(rstn),
+    .data_in_valid	(data_to_partial_valid),
+    .data_in		(data_macro_partial_sum[3:2]),
+    .data_out		(data_partial_bn[127:64])
 );
 
 wire signed [DATA_WIDTH - 1 : 0] 	data_bn_rprelu [CHANNEL_NUM - 1 : 0];

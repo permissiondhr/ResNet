@@ -8,14 +8,14 @@ module partial_sum
     output reg  signed [7:0]    data_out[63:0]
 );
 
-wire signed [3:0]   data_in_tmp[63:0][1:0]
+wire signed [3:0]   data_in_tmp[1:0][63:0];
 wire signed [7:0]   data_out_tmp[63:0];
 
 genvar i, j;
 generate
     for(i = 0; i < 2; i = i + 1) begin
         for(j = 0; j < 64; j = j + 1) begin
-            assign data_in_tmp[i][j] = {data_in[i][j][3] : ~data_in[i][j][2:0]};
+            assign data_in_tmp[i][j] = {data_in[i][j][3], ~data_in[i][j][2:0]};
         end
     end
 endgenerate

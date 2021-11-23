@@ -13,10 +13,10 @@
 // VERSION: 1.0.0
 //
 `include "defines.v"
-module bn_res_layer7
+module bn_res_layer5
 #(
-    parameter FM_DEPTH     = 'd256,         // Depth of the Feature Map
-    parameter CHANNEL_NUM  = 'd512          // Channel number of Macro
+    parameter FM_DEPTH     = 'd128,         // Depth of the Feature Map
+    parameter CHANNEL_NUM  = 'd256          // Channel number of Macro
 )
 (
     // GLOBAL SIGNALS
@@ -39,9 +39,11 @@ module bn_res_layer7
     reg  signed [`DATA_WIDTH * 2 - 1 : 0] data_out_reg[CHANNEL_NUM - 1 : 0];    // register of data_out, 32bit
     wire signed [`DATA_WIDTH - 1 : 0] res_ext[CHANNEL_NUM - 1 : 0]; 
 
+    //assign res_ext = {res, res};
+
     genvar i;
     generate for(i = 0; i < CHANNEL_NUM; i = i + 1) begin: data_out_reg_loop
-        assign res_ext[i] =(i < FM_DEPTH) ? res[i] : 16'h0;
+        assign res_ext[i] =(i < FM_DEPTH) ? res[i] : res[i - FM_DEPTH];
 	    always @(posedge clk or negedge rst_n) begin
             if(rst_n == `RSTVALID) begin    // RESET
                 data_out_reg[i] <= 'b0;

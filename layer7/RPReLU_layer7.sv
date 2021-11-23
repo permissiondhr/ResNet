@@ -13,9 +13,9 @@
 // VERSION: 1.0.0
 //
 `include "defines.v"
-module RPReLU_layer7
+module RPReLU_layer5
 #(
-    parameter CHANNEL_NUM  = 'd512         // Channel number of Macro
+    parameter CHANNEL_NUM  = 'd256         // Channel number of Macro
 )
 (
     // GLOBAL SIGNALS
@@ -39,28 +39,34 @@ module RPReLU_layer7
 
     reg signed [`DATA_WIDTH * 2 - 1 : 0] data_gamma[CHANNEL_NUM - 1 : 0];
     reg signed [`DATA_WIDTH * 2 - 1 : 0] beta_data_gamma[CHANNEL_NUM - 1 : 0];
-    reg tmpdata_e;
+    reg data_e_dg, data_e_bdg;
 
     genvar i;
     generate
-	for(i = 0; i < CHANNEL_NUM; i = i + 1) begin: data_out_reg_loop
-        always @(posedge clk or negedge rst_n) begin
+	for(i = 0; i < CHANNEL_NUM; i = i + 1) begin: data_reg_loo
+        always @(posedge clk or negedge rst_n) begin: data_gamma_loop
             if(rst_n == `RSTVALID) begin
                 data_gamma[i] <= 'b0;
-                beta_data_gamma[i] <= 'b0;
             end else if(mode  == `CALCULATE && data_e == `DATAVALID) begin
                 data_gamma[i] <= data_in[i] - rprelu_gamma[i];
-                beta_data_gamma[i] <= rprelu_beta[i] * (data_in[i] - rprelu_gamma[i]);
             end else begin
                 data_gamma[i] <= data_gamma[i];
-                beta_data_gamma[i] <= beta_data_gamma[i];
             end // if
         end // always
 
-        always @(posedge clk or negedge rst_n) begin
+        always @(posedge clk or negedge rst_n) begin:beta_data_gamma_loop
+            if(rst_n == `RSTVALID) begin
+                beta_data_gamma[i] <= 'b0;
+            end else if(mode  == `CALCULATE && data_e_dg == `DATAVALID) begin
+                beta_data_gamma[i] <= rprelu_beta[i] * data_gamma[i];
+            end else begin
+                beta_data_gamma[i] <= beta_data_gamma[i];
+            end // if
+        end // always
+        always @(posedge clk or negedge rst_n) begin:data_out_reg_loop
             if(rst_n == `RSTVALID) begin
                 data_out_reg[i] <= 'b0;
-        	end else if(mode == `CALCULATE && tmpdata_e == `DATAVALID) begin
+        	end else if(mode == `CALCULATE && data_e_bdg == `DATAVALID) begin
                 data_out_reg[i] <= (data_in[i] > rprelu_gamma[i]) ? (data_gamma[i] + rprelu_zeta[i]) <<< 8 :
                                                                     (beta_data_gamma[i] + (rprelu_zeta[i] <<< 8));
             end else begin
@@ -72,18 +78,28 @@ module RPReLU_layer7
 
     always @(posedge clk or negedge rst_n) begin
         if(rst_n == `RSTVALID) begin
-            tmpdata_e <= `DATAINVALID;
+            data_e_dg <= `DATAINVALID;
         end else if(mode  == `CALCULATE && data_e == `DATAVALID) begin
-            tmpdata_e <= `DATAVALID;
+            data_e_dg <= `DATAVALID;
         end else begin
-            tmpdata_e <= `DATAINVALID;
+            data_e_dg <= `DATAINVALID;
+        end // if
+    end // always
+
+    always @(posedge clk or negedge rst_n) begin
+        if(rst_n == `RSTVALID) begin
+            data_e_bdg <= `DATAINVALID;
+        end else if(mode  == `CALCULATE && data_e_dg == `DATAVALID) begin
+            data_e_bdg <= `DATAVALID;
+        end else begin
+            data_e_bdg <= `DATAINVALID;
         end // if
     end // always
 
     always @(posedge clk or negedge rst_n) begin
         if(rst_n == `RSTVALID) begin
             data_e_out  <= `DATAINVALID;
-    	end else if(mode == `CALCULATE && tmpdata_e == `DATAVALID) begin
+    	end else if(mode == `CALCULATE && data_e_bdg == `DATAVALID) begin
             data_e_out  <= `DATAVALID;
         end else begin
             data_e_out  <= `DATAINVALID;
