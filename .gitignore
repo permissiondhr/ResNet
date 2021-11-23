@@ -8,3 +8,4 @@ Waveform.json
 *.xlsx
 *.zip
 ModelSimProject/*
+rtl_after_sys/*
