@@ -56,9 +56,9 @@ generate
 	    end
 
 		if (i < FM_DEPTH)
-			assign data_tmp[i] = product[i] + bn_b[i]  + res[i];
+			assign data_tmp[i] = product[i] + bn_b[i] + res[i];
 		else
-			assign data_tmp[i] = product[i] + bn_b[i];
+			assign data_tmp[i] = product[i] + bn_b[i] + res[i-FM_DEPTH];
 		
 		always @(posedge clk or negedge rstn) begin
 			if(~rstn)

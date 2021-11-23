@@ -64,7 +64,7 @@ rsign #(
 ) inst_rsign(
     .clk			(clk),
     .rstn			(rstn),
-    .data_in_valid	(data_in_valid),
+    .data_in_valid	(valid_wrapper_rsign),
     .para_in 		(rsign_para),
     .data_in 		(data_wrapper_rsign),
     .data_out		(data_rsign_macro)
